@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Event Detail{% endblock %}
+
+{% block content %}
+  <div class="flex items-start justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold">{{ event.name }}</h1>
+      <p class="text-sm text-gray-600">{{ event.date }} • {{ event.time }} • {{ event.location }}</p>
+      <p class="text-sm text-gray-600">Category: {{ event.category.name }}</p>
+    </div>
+
+    <div class="flex gap-2">
+      <a href="{% url 'event_update' event.id %}" class="px-4 py-2 border rounded hover:bg-gray-100">Edit</a>
+      <a href="{% url 'event_delete' event.id %}" class="px-4 py-2 border rounded hover:bg-gray-100">Delete</a>
+    </div>
+  </div>
+
+  <div class="bg-white border rounded p-4 mb-6">
+    <h2 class="font-semibold mb-2">Description</h2>
+    <p class="text-sm text-gray-700 whitespace-pre-line">{{ event.description }}</p>
+  </div>
+
+  <div class="bg-white border rounded p-4">
+    <h2 class="font-semibold mb-2">Participants</h2>
+    {% if event.participants.all %}
+      <ul class="list-disc pl-5 text-sm text-gray-700">
+        {% for p in event.participants.all %}
+          <li>{{ p.name }} — {{ p.email }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-gray-600">No participants assigned to this event.</p>
+    {% endif %}
+  </div>
+{% endblock %}

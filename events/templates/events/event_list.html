@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Events{% endblock %}
+
+{% block content %}
+
+<div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
+  <div>
+    <p class="text-sm tracking-widest text-gray-400 uppercase">Manage Records</p>
+    <h1 class="mt-2 text-4xl font-bold tracking-tight">
+      <span class="text-red-400">Events</span> <span class="text-gray-100">Listing</span>
+    </h1>
+    <p class="mt-3 text-gray-400">Search, Organize and manage all events.</p>
+  </div>
+
+  <div class="mt-2 md:mt-0">
+    <a href="{% url 'event_create' %}"
+       class="inline-flex items-center justify-center px-5 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
+      + Create Event
+    </a>
+  </div>
+</div>
+
+
+<form method="GET"
+      class="border border-white/10 bg-white/5 rounded p-5 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+
+
+  <div>
+    <label class="block text-sm text-gray-300 mb-1">Search (name/location)</label>
+    <input type="text"
+           name="search"
+           value="{{ search }}"
+           placeholder="e.g. Dhaka"
+           class="w-full bg-[#0f1116] border border-white/10 rounded px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-400/40">
+  </div>
+
+
+  <div>
+    <label class="block text-sm text-gray-300 mb-1">Category</label>
+    <select name="category"
+            class="w-full bg-[#0f1116] border border-white/10 rounded px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-400/40">
+      <option value="">All</option>
+      {% for c in categories %}
+        <option value="{{ c.id }}"
+                {% if category_id == c.id|stringformat:"s" %}selected{% endif %}>
+          {{ c.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+
+  <div>
+    <label class="block text-sm text-gray-300 mb-1">Start Date</label>
+    <input type="date"
+           name="start_date"
+           value="{{ start_date }}"
+           class="w-full bg-[#0f1116] border border-white/10 rounded px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-400/40">
+  </div>
+
+
+  <div>
+    <label class="block text-sm text-gray-300 mb-1">End Date</label>
+    <input type="date"
+           name="end_date"
+           value="{{ end_date }}"
+           class="w-full bg-[#0f1116] border border-white/10 rounded px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-400/40">
+  </div>
+
+
+  <div class="md:col-span-4 flex gap-3 mt-2">
+    <button
+      class="px-5 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
+      Apply
+    </button>
+
+    <a href="{% url 'event_list' %}"
+       class="px-5 py-2 rounded border border-white/15 hover:bg-white/5 transition text-sm">
+      Reset
+    </a>
+  </div>
+</form>
+
+
+<div class="border border-white/10 bg-white/5 rounded">
+  <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+    <p class="text-sm text-gray-300">
+      Showing: <span class="font-semibold text-gray-100">{{ events|length }}</span>
+    </p>
+  </div>
+
+  {% if events %}
+    <div class="divide-y divide-white/10">
+      {% for e in events %}
+        <div class="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <a href="{% url 'event_detail' e.id %}"
+               class="font-semibold text-gray-100 hover:underline">
+              {{ e.name }}
+            </a>
+
+            <p class="text-sm text-gray-400 mt-1">
+              {{ e.date }} • {{ e.time }} • {{ e.location }}
+            </p>
+
+            <p class="text-xs text-gray-500 mt-1">
+              Category: {{ e.category.name }}{% if e.participant_count is not None %} • Participants: {{ e.participant_count }}{% endif %}
+            </p>
+          </div>
+
+          <div class="flex gap-2">
+            <a href="{% url 'event_update' e.id %}"
+               class="px-4 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
+              Edit
+            </a>
+            <a href="{% url 'event_delete' e.id %}"
+               class="px-4 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
+              Delete
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="px-5 py-6">
+      <p class="text-gray-300">No events found.</p>
+      <p class="text-sm text-gray-500 mt-1">Try changing filters or create a new event.</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

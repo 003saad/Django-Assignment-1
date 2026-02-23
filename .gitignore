@@ -1,0 +1,3 @@
+event-management/
+__pycache__/
+db.sqlite3

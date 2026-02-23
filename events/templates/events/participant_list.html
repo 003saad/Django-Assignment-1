@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Participants{% endblock %}
+
+{% block content %}
+
+
+<div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
+  <div>
+    <p class="text-sm tracking-widest text-gray-400 uppercase">Manage Records</p>
+    <h1 class="mt-2 text-4xl font-bold tracking-tight">
+      <span class="text-red-400">Participants</span> <span class="text-gray-100">Listing</span>
+    </h1>
+    <p class="mt-3 text-gray-400">Create and manage participants for event registrations.</p>
+  </div>
+
+  <div class="mt-2 md:mt-0">
+    <a href="{% url 'participant_create' %}"
+       class="inline-flex items-center justify-center px-5 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
+      + Create Participant
+    </a>
+  </div>
+</div>
+
+
+<div class="border border-white/10 bg-white/5 rounded">
+  <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+    <p class="text-sm text-gray-300">
+      Total: <span class="font-semibold text-gray-100">{{ participants|length }}</span>
+    </p>
+  </div>
+
+  {% if participants %}
+    <div class="divide-y divide-white/10">
+      {% for p in participants %}
+        <div class="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <p class="font-semibold text-gray-100">{{ p.name }}</p>
+            <p class="text-sm text-gray-400 mt-1">{{ p.email }}</p>
+          </div>
+
+          <div class="flex gap-2">
+            <a href="{% url 'participant_update' p.id %}"
+               class="px-4 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
+              Edit
+            </a>
+            <a href="{% url 'participant_delete' p.id %}"
+               class="px-4 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
+              Delete
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="px-5 py-6">
+      <p class="text-gray-300">No participants found.</p>
+      <p class="text-sm text-gray-500 mt-1">Create participants first, then assign them to events.</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

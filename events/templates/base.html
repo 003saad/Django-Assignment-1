@@ -1,0 +1,39 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Event Management{% endblock %}</title>
+
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="stylesheet" href="{% static 'events/app.css' %}">
+</head>
+
+<body class="min-h-screen bg-slate-900 text-slate-100">
+  
+  <nav class="border-b border-white/10">
+    <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
+      <a href="{% url 'dashboard' %}" class="text-lg font-semibold tracking-wide">
+        <span class="text-slate-100">Event Management</span>
+      </a>
+
+      <div class="flex items-center gap-6 text-sm uppercase tracking-widest">
+        <a href="{% url 'dashboard' %}" class="hover:text-red-300 transition">Dashboard</a>
+        <a href="{% url 'event_list' %}" class="hover:text-red-300 transition">Events</a>
+        <a href="{% url 'category_list' %}" class="hover:text-red-300 transition">Categories</a>
+        <a href="{% url 'participant_list' %}" class="hover:text-red-300 transition">Participants</a>
+      </div>
+    </div>
+  </nav>
+
+
+  <main class="max-w-6xl mx-auto px-5 py-12">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{% static 'events/app.js' %}"></script>
+</body>
+</html>
