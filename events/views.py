@@ -1,32 +1,52 @@
 from datetime import date as dt_date
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
-from .models import Category, Event, Participant
+
+from accounts.role_decorators import role_required
 from .forms import CategoryForm, EventForm, ParticipantForm
+from .models import Category, Event, Participant
 
 
-# -------------------------
-# Dashboard (Module 8)
-# -------------------------
+# Role-based redirect
+@login_required
+def dashboard_redirect(request):
+    user = request.user
+
+    if user.is_superuser or user.groups.filter(name="Admin").exists():
+        return redirect("admin_dashboard")
+
+    if user.groups.filter(name="Organizer").exists():
+        return redirect("organizer_dashboard")
+
+    if user.groups.filter(name="Participant").exists():
+        return redirect("participant_dashboard")
+
+    return redirect("dashboard")
+
+
+# Main dashboard
+@login_required
 def dashboard(request):
     today = dt_date.today()
 
     total_events = Event.objects.count()
-    total_participants_unique = Participant.objects.count()
-
+    total_participants_unique = (
+        User.objects.filter(groups__name="Participant").distinct().count()
+    )
     upcoming_count = Event.objects.filter(date__gte=today).count()
     past_count = Event.objects.filter(date__lt=today).count()
+    total_participant_registrations = Event.rsvps.through.objects.count()
 
-    # total participant "registrations" across all events (can count duplicates if same participant joins multiple events)
-    total_participant_registrations = Event.participants.through.objects.count()
-
-    # section below stats grid changes by query param
-    mode = request.GET.get("mode", "today")  # today | all | upcoming | past
+    mode = request.GET.get("mode", "today")
 
     qs = (
         Event.objects.select_related("category")
-        .prefetch_related("participants")
-        .annotate(participant_count=Count("participants", distinct=True))
+        .prefetch_related("participants", "rsvps")
+        .annotate(participant_count=Count("rsvps", distinct=True))
         .order_by("date", "time")
     )
 
@@ -56,34 +76,75 @@ def dashboard(request):
     return render(request, "events/dashboard.html", context)
 
 
-# -------------------------
-# Event CRUD + Search + Filters + Optimized Queries
-# -------------------------
+# Role dashboards
+@login_required
+@role_required("Admin")
+def admin_dashboard(request):
+    total_events = Event.objects.count()
+    total_categories = Category.objects.count()
+    total_users = User.objects.count()
+
+    context = {
+        "total_events": total_events,
+        "total_categories": total_categories,
+        "total_users": total_users,
+    }
+    return render(request, "events/admin_dashboard.html", context)
+
+
+@login_required
+@role_required("Organizer", "Admin")
+def organizer_dashboard(request):
+    total_events = Event.objects.count()
+    total_categories = Category.objects.count()
+
+    context = {
+        "total_events": total_events,
+        "total_categories": total_categories,
+    }
+    return render(request, "events/organizer_dashboard.html", context)
+
+
+@login_required
+@role_required("Participant", "Organizer", "Admin")
+def participant_dashboard(request):
+    events = (
+        request.user.rsvp_events.select_related("category")
+        .all()
+        .order_by("date", "time")
+    )
+
+    context = {
+        "events": events,
+    }
+    return render(request, "events/participant_dashboard.html", context)
+
+
+# Event views
+@login_required
 def event_list(request):
     events = (
         Event.objects.select_related("category")
-        .prefetch_related("participants")
-        .annotate(participant_count=Count("participants", distinct=True))
+        .prefetch_related("participants", "rsvps")
+        .annotate(participant_count=Count("rsvps", distinct=True))
         .order_by("date", "time")
     )
 
     categories = Category.objects.all().order_by("name")
 
-    # Search by name or location (icontains)
     search = request.GET.get("search")
     if search:
         events = events.filter(
             Q(name__icontains=search) | Q(location__icontains=search)
         )
 
-    # Filter by category
     category_id = request.GET.get("category")
     if category_id:
         events = events.filter(category_id=category_id)
 
-    # Filter by date range
-    start = request.GET.get("start")
-    end = request.GET.get("end")
+    start = request.GET.get("start") or request.GET.get("start_date")
+    end = request.GET.get("end") or request.GET.get("end_date")
+
     if start and end:
         events = events.filter(date__range=[start, end])
 
@@ -94,88 +155,145 @@ def event_list(request):
         "category_id": category_id or "",
         "start": start or "",
         "end": end or "",
+        "start_date": start or "",
+        "end_date": end or "",
     }
     return render(request, "events/event_list.html", context)
 
 
+@login_required
 def event_detail(request, pk):
     event = get_object_or_404(
-        Event.objects.select_related("category").prefetch_related("participants"), pk=pk
+        Event.objects.select_related("category").prefetch_related(
+            "participants", "rsvps"
+        ),
+        pk=pk,
     )
-    return render(request, "events/event_detail.html", {"event": event})
+
+    has_rsvped = event.rsvps.filter(id=request.user.id).exists()
+
+    context = {
+        "event": event,
+        "has_rsvped": has_rsvped,
+    }
+    return render(request, "events/event_detail.html", context)
 
 
+@login_required
+@role_required("Participant", "Organizer", "Admin")
+def rsvp_event(request, pk):
+    event = get_object_or_404(Event, pk=pk)
+
+    if request.method == "POST":
+        if event.rsvps.filter(id=request.user.id).exists():
+            messages.warning(request, "You have already RSVP’d to this event.")
+        else:
+            event.rsvps.add(request.user)
+            messages.success(request, "RSVP successful.")
+
+    return redirect("event_detail", pk=pk)
+
+
+@login_required
+@role_required("Organizer", "Admin")
 def event_create(request):
     form = EventForm(request.POST or None)
+
     if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("event_list")
+
     return render(
         request, "events/event_form.html", {"form": form, "title": "Create Event"}
     )
 
 
+@login_required
+@role_required("Organizer", "Admin")
 def event_update(request, pk):
     event = get_object_or_404(Event, pk=pk)
     form = EventForm(request.POST or None, instance=event)
+
     if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("event_detail", pk=pk)
+
     return render(
         request, "events/event_form.html", {"form": form, "title": "Update Event"}
     )
 
 
+@login_required
+@role_required("Organizer", "Admin")
 def event_delete(request, pk):
     event = get_object_or_404(Event, pk=pk)
+
     if request.method == "POST":
         event.delete()
         return redirect("event_list")
+
     return render(request, "events/event_confirm_delete.html", {"event": event})
 
 
-# -------------------------
-# Category CRUD
-# -------------------------
+# Category views
+@login_required
 def category_list(request):
     categories = Category.objects.all().order_by("name")
     return render(request, "events/category_list.html", {"categories": categories})
 
 
+@login_required
+@role_required("Organizer", "Admin")
 def category_create(request):
     form = CategoryForm(request.POST or None)
+
     if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("category_list")
+
     return render(
-        request, "events/category_form.html", {"form": form, "title": "Create Category"}
+        request,
+        "events/category_form.html",
+        {"form": form, "title": "Create Category"},
     )
 
 
+@login_required
+@role_required("Organizer", "Admin")
 def category_update(request, pk):
     category = get_object_or_404(Category, pk=pk)
     form = CategoryForm(request.POST or None, instance=category)
+
     if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("category_list")
+
     return render(
-        request, "events/category_form.html", {"form": form, "title": "Update Category"}
+        request,
+        "events/category_form.html",
+        {"form": form, "title": "Update Category"},
     )
 
 
+@login_required
+@role_required("Admin")
 def category_delete(request, pk):
     category = get_object_or_404(Category, pk=pk)
+
     if request.method == "POST":
         category.delete()
         return redirect("category_list")
+
     return render(
-        request, "events/category_confirm_delete.html", {"category": category}
+        request,
+        "events/category_confirm_delete.html",
+        {"category": category},
     )
 
 
-# -------------------------
-# Participant CRUD
-# -------------------------
+# Participant views
+@login_required
+@role_required("Admin")
 def participant_list(request):
     participants = Participant.objects.all().order_by("name")
     return render(
@@ -183,11 +301,15 @@ def participant_list(request):
     )
 
 
+@login_required
+@role_required("Admin")
 def participant_create(request):
     form = ParticipantForm(request.POST or None)
+
     if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("participant_list")
+
     return render(
         request,
         "events/participant_form.html",
@@ -195,12 +317,16 @@ def participant_create(request):
     )
 
 
+@login_required
+@role_required("Admin")
 def participant_update(request, pk):
     participant = get_object_or_404(Participant, pk=pk)
     form = ParticipantForm(request.POST or None, instance=participant)
+
     if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("participant_list")
+
     return render(
         request,
         "events/participant_form.html",
@@ -208,11 +334,17 @@ def participant_update(request, pk):
     )
 
 
+@login_required
+@role_required("Admin")
 def participant_delete(request, pk):
     participant = get_object_or_404(Participant, pk=pk)
+
     if request.method == "POST":
         participant.delete()
         return redirect("participant_list")
+
     return render(
-        request, "events/participant_confirm_delete.html", {"participant": participant}
+        request,
+        "events/participant_confirm_delete.html",
+        {"participant": participant},
     )

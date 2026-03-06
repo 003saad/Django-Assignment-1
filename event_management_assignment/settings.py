@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 import dj_database_url
 
@@ -26,7 +27,11 @@ SECRET_KEY = "django-insecure--yg6p^5^1rjc$_)h^9)s9x=w1gp0gloy=%n@7#0+z-ybb^qn$!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["django-assignment-1-hejf.onrender.com"]
+ALLOWED_HOSTS = [
+    "django-assignment-1-hejf.onrender.com",
+    "127.0.0.1",
+    "localhost",
+]
 CSRF_TRUSTED_ORIGINS = [
     "https://django-assignment-1-hejf.onrender.com",
     "http://127.0.0.1:8000",
@@ -42,8 +47,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "events",
+    "events.apps.EventsConfig",
     "debug_toolbar",
+    "accounts.apps.AccountsConfig",
 ]
 
 MIDDLEWARE = [
@@ -92,13 +98,25 @@ WSGI_APPLICATION = "event_management_assignment.wsgi.application"
 #         "NAME": BASE_DIR / "db.sqlite3",
 #     }
 # }
+# DATABASES = {
+#     "default": dj_database_url.config(
+#         # Replace this value with your local database's connection string.
+#         default="postgresql://task_management_db_ljiw_user:jRZNZOx43hgo3qcYj7edUYczELe4qXpt@dpg-d6e0avf5r7bs73bat0d0-a.oregon-postgres.render.com/task_management_db_ljiw",
+#         conn_max_age=600,
+#     )
+# }
 DATABASES = {
-    "default": dj_database_url.config(
-        # Replace this value with your local database's connection string.
-        default="postgresql://task_management_db_ljiw_user:jRZNZOx43hgo3qcYj7edUYczELe4qXpt@dpg-d6e0avf5r7bs73bat0d0-a.oregon-postgres.render.com/task_management_db_ljiw",
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
+
+if os.environ.get("DATABASE_URL"):
+    DATABASES["default"] = dj_database_url.parse(
+        os.environ.get("DATABASE_URL"),
         conn_max_age=600,
     )
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -137,5 +155,12 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 STATICFILES_DIRS = []
-
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "dashboard_redirect"
+LOGOUT_REDIRECT_URL = "login"
 # APP_DIRS = True
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "noreply@example.com"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"

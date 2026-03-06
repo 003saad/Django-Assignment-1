@@ -38,7 +38,7 @@ class EventForm(forms.ModelForm):
             "time",
             "location",
             "category",
-            "participants",
+            "image",
         ]
         base = "w-full bg-[#0f1116] border border-white/10 rounded px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-400/40"
 
@@ -49,7 +49,8 @@ class EventForm(forms.ModelForm):
             "time": forms.TimeInput(attrs={"type": "time", "class": base}),
             "location": forms.TextInput(attrs={"class": base}),
             "category": forms.Select(attrs={"class": base}),
-            "participants": forms.SelectMultiple(attrs={"class": base, "size": 10}),
+            # "participants": forms.SelectMultiple(attrs={"class": base, "size": 10}),
+            "image": forms.ClearableFileInput(attrs={"class": base}),
         }
 
     def clean_name(self):

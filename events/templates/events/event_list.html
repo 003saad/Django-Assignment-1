@@ -20,10 +20,8 @@
   </div>
 </div>
 
-
 <form method="GET"
       class="border border-white/10 bg-white/5 rounded p-5 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-
 
   <div>
     <label class="block text-sm text-gray-300 mb-1">Search (name/location)</label>
@@ -33,7 +31,6 @@
            placeholder="e.g. Dhaka"
            class="w-full bg-[#0f1116] border border-white/10 rounded px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-400/40">
   </div>
-
 
   <div>
     <label class="block text-sm text-gray-300 mb-1">Category</label>
@@ -49,7 +46,6 @@
     </select>
   </div>
 
-
   <div>
     <label class="block text-sm text-gray-300 mb-1">Start Date</label>
     <input type="date"
@@ -58,7 +54,6 @@
            class="w-full bg-[#0f1116] border border-white/10 rounded px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-400/40">
   </div>
 
-
   <div>
     <label class="block text-sm text-gray-300 mb-1">End Date</label>
     <input type="date"
@@ -66,7 +61,6 @@
            value="{{ end_date }}"
            class="w-full bg-[#0f1116] border border-white/10 rounded px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-400/40">
   </div>
-
 
   <div class="md:col-span-4 flex gap-3 mt-2">
     <button
@@ -81,7 +75,6 @@
   </div>
 </form>
 
-
 <div class="border border-white/10 bg-white/5 rounded">
   <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between">
     <p class="text-sm text-gray-300">
@@ -92,31 +85,47 @@
   {% if events %}
     <div class="divide-y divide-white/10">
       {% for e in events %}
-        <div class="px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div>
-            <a href="{% url 'event_detail' e.id %}"
-               class="font-semibold text-gray-100 hover:underline">
-              {{ e.name }}
-            </a>
+        <div class="px-5 py-4">
+          <div class="flex flex-col md:flex-row gap-4 md:items-start md:justify-between">
+            
+            <div class="w-full md:w-64 shrink-0">
+              {% if e.image %}
+                <img src="{{ e.image.url }}"
+                     alt="{{ e.name }}"
+                     class="w-full h-40 object-cover rounded mb-3">
+              {% else %}
+                <div class="w-full h-40 rounded mb-3 border border-white/10 bg-[#0f1116] flex items-center justify-center text-sm text-gray-500">
+                  No image available
+                </div>
+              {% endif %}
+            </div>
 
-            <p class="text-sm text-gray-400 mt-1">
-              {{ e.date }} • {{ e.time }} • {{ e.location }}
-            </p>
+            <div class="flex-1">
+              <a href="{% url 'event_detail' e.id %}"
+                 class="font-semibold text-gray-100 hover:underline text-lg">
+                {{ e.name }}
+              </a>
 
-            <p class="text-xs text-gray-500 mt-1">
-              Category: {{ e.category.name }}{% if e.participant_count is not None %} • Participants: {{ e.participant_count }}{% endif %}
-            </p>
-          </div>
+              <p class="text-sm text-gray-400 mt-1">
+                {{ e.date }} • {{ e.time }} • {{ e.location }}
+              </p>
 
-          <div class="flex gap-2">
-            <a href="{% url 'event_update' e.id %}"
-               class="px-4 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
-              Edit
-            </a>
-            <a href="{% url 'event_delete' e.id %}"
-               class="px-4 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
-              Delete
-            </a>
+              <p class="text-xs text-gray-500 mt-1">
+                Category: {{ e.category.name }}{% if e.participant_count is not None %} • Participants: {{ e.participant_count }}{% endif %}
+              </p>
+            </div>
+
+            <div class="flex gap-2">
+              <a href="{% url 'event_update' e.id %}"
+                 class="px-4 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
+                Edit
+              </a>
+              <a href="{% url 'event_delete' e.id %}"
+                 class="px-4 py-2 rounded border border-white/15 bg-white/5 hover:bg-white/10 transition text-sm">
+                Delete
+              </a>
+            </div>
+
           </div>
         </div>
       {% endfor %}

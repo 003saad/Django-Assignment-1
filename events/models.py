@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 
 
@@ -26,8 +27,15 @@ class Event(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE, related_name="events"
     )
+
     participants = models.ManyToManyField(
         Participant, related_name="events", blank=True
+    )
+
+    rsvps = models.ManyToManyField(User, related_name="rsvp_events", blank=True)
+
+    image = models.ImageField(
+        upload_to="event_images/", default="default_event.jpg", blank=True
     )
 
     def __str__(self):

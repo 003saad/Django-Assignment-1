@@ -6,31 +6,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}Event Management{% endblock %}</title>
 
-  
   <script src="https://cdn.tailwindcss.com"></script>
 
   <link rel="stylesheet" href="{% static 'events/app.css' %}">
 </head>
 
 <body class="min-h-screen bg-slate-900 text-slate-100">
-  
+
   <nav class="border-b border-white/10">
     <div class="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
-      <a href="{% url 'dashboard' %}" class="text-lg font-semibold tracking-wide">
+      <a href="{% url 'dashboard_redirect' %}" class="text-lg font-semibold tracking-wide">
         <span class="text-slate-100">Event Management</span>
       </a>
 
       <div class="flex items-center gap-6 text-sm uppercase tracking-widest">
-        <a href="{% url 'dashboard' %}" class="hover:text-red-300 transition">Dashboard</a>
+        <a href="{% url 'dashboard_redirect' %}" class="hover:text-white transition">Dashboard</a>
         <a href="{% url 'event_list' %}" class="hover:text-red-300 transition">Events</a>
         <a href="{% url 'category_list' %}" class="hover:text-red-300 transition">Categories</a>
-        <a href="{% url 'participant_list' %}" class="hover:text-red-300 transition">Participants</a>
+
+        {% if request.user.is_authenticated %}
+          <span class="text-gray-300 normal-case tracking-normal">Hi, {{ request.user.username }}</span>
+
+          <form method="POST" action="{% url 'logout' %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="hover:text-white transition text-sm text-gray-300 uppercase tracking-widest">
+              Logout
+            </button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}" class="hover:text-white transition">Login</a>
+          <a href="{% url 'signup' %}" class="hover:text-white transition">Signup</a>
+        {% endif %}
       </div>
     </div>
   </nav>
 
-
   <main class="max-w-6xl mx-auto px-5 py-12">
+    {% if messages %}
+      <div class="mb-6 space-y-2">
+        {% for message in messages %}
+          <div class="border border-white/10 bg-white/5 rounded px-4 py-3 text-sm text-gray-200">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     {% block content %}{% endblock %}
   </main>
 
