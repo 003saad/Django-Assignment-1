@@ -216,10 +216,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "events.apps.EventsConfig",
+<<<<<<< HEAD
+=======
+    # "debug_toolbar",
+>>>>>>> 5f81f7e (error fix)
     "accounts.apps.AccountsConfig",
 ]
 
 MIDDLEWARE = [
+<<<<<<< HEAD
+=======
+    # "debug_toolbar.middleware.DebugToolbarMiddleware",
+>>>>>>> 5f81f7e (error fix)
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -229,6 +237,18 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+<<<<<<< HEAD
+=======
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
+    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]
+
+>>>>>>> 5f81f7e (error fix)
 ROOT_URLCONF = "event_management_assignment.urls"
 
 TEMPLATES = [
